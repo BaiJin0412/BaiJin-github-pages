@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>海大校园墙</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* === 1. 页面：全屏灰色背景 === */
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: "Microsoft YaHei", 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #page {
+            width: 100vw;
+            height: 100vh;
+            background-color: #e8e8e8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* === 2. 互动界面：严格4:3，小于页面 === */
+        #ui {
+            width: 80vw;
+            max-width: 960px;
+            height: calc(80vw * 3 / 4);
+            max-height: 720px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === 3. 内容区 === */
+        #content-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ===== 左侧聊天列表：宽度占比 30% (3:7比例中的3) ===== */
+        #sidebar {
+            width: 30%;
+            /* 左侧占30% */
+            background: #f8f8f8;
+            border-right: 1px solid #e6e6e6;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .chat-item:hover {
+            background: #ededed;
+        }
+
+        .chat-item.active {
+            background: #e5e5e5;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 6px;
+            margin-right: 12px;
+            flex-shrink: 0;
+            object-fit: cover;
+            /* 保持图片比例并填满 */
+        }
+
+        .chat-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-name {
+            font-weight: 500;
+            color: #222;
+            font-size: 15px;
+        }
+
+        .preview {
+            color: #888;
+            font-size: 13px;
+            margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ===== 右侧主显示区：宽度占比 70% (3:7比例中的7) ===== */
+        #main-display {
+            width: 70%;
+            /* 右侧占70% */
+            display: flex;
+            flex-direction: column;
+            background: white;
+            overflow: hidden;
+        }
+
+        /* 聊天区域头部 */
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e6e6e6;
+            font-weight: 500;
+            font-size: 16px;
+            color: #222;
+            background: #fcfcfc;
+            flex-shrink: 0;
+        }
+
+        /* 消息区域 */
+        .message-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f5f7;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 18px;
+        }
+
+        .message-them {
+            justify-content: flex-start;
+        }
+
+        .message-me {
+            justify-content: flex-end;
+        }
+
+        /* 消息头像 */
+        .msg-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            object-fit: cover;
+            /* 保持图片比例并填满 */
+        }
+
+        /* 我方头像与个人页面头像一致 */
+        .msg-avatar.me {
+            background: linear-gradient(45deg, #f6b1b1, #f08b8b);
+        }
+
+        /* 聊天消息与头像垂直居中 */
+        .message {
+            align-items: center;
+        }
+
+        .message-them .bubble {
+            margin-left: 12px;
+        }
+
+        .message-me .bubble {
+            margin-right: 12px;
+        }
+
+        .bubble {
+            max-width: 70%;
+            padding: 10px 14px;
+            border-radius: 6px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .message-them .bubble {
+            background: white;
+            border: 1px solid #e1e1e1;
+            color: #333;
+        }
+
+        .message-me .bubble {
+            background: #FCBEC3;
+            color: #222;
+        }
+
+        /* ===== 底部导航 ===== */
+        #bottom-nav {
+            display: flex;
+            height: 60px;
+            background: #f8f8f8;
+            border-top: 1px solid #e6e6e6;
+            flex-shrink: 0;
+        }
+
+        .nav-icon {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .nav-icon:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .nav-icon.active {
+            color: #FCBEC3;
+        }
+
+        .nav-icon i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        /* ===== “朋友圈”和“我”的界面（默认隐藏）===== */
+        .page {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        #chat-page.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f7;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 朋友圈页面模拟 */
+        .moments-item {
+            position: relative;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            background: #FCBEC3;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 6px 16px #c0b9b90f;
+            line-height: 1.7;
+            /* 提高行高以改善可读性 */
+        }
+
+        /* 添加生活圈区域样式 */
+        #moments-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 0;
+        }
+
+        .moments-item {
+            position: relative;
+            padding: 18px 20px;
+            background: #FCBEC3;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+            line-height: 1.7;
+            flex-shrink: 0;
+        }
+
+        .moments-item>div,
+        .moments-item>p {
+            line-height: 1.7;
+            /* 标题与段落统一行高 */
+        }
+
+        .moments-item p {
+            margin-top: 10px;
+            margin-bottom: 0;
+        }
+
+        /* 朋友圈顶部输入区域 */
+        .moments-input-container {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            background: #fff;
+        }
+
+        .moments-input-container textarea {
+            flex: 1;
+            resize: vertical;
+            min-height: 64px;
+            max-height: 160px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #e6e6e6;
+            font-size: 14px;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        .moments-input-container .paper-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: #FCBEC3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .moments-item .trash-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #555;
+            border: none;
+            z-index: 10;
+        }
+
+        .moments-item .trash-btn:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        /* 确认对话框 */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .confirm-modal {
+            background: #fff;
+            border-radius: 10px;
+            width: 320px;
+            max-width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .confirm-body {
+            padding: 18px;
+            font-size: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        .confirm-footer {
+            padding: 12px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .confirm-btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            font-weight: 600;
+        }
+
+        .confirm-btn.delete {
+            background: #f66;
+            color: #fff;
+            border-color: rgba(0, 0, 0, 0.06);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 聊天记录顶部时间展示 */
+        .chat-time {
+            text-align: center;
+            padding: 12px 0;
+            margin-top: -16px;
+            font-size: 15px;
+            color: #888;
+            background: transparent;
+        }
+
+        /* “我”的页面模拟 */
+        .profile-page {
+            align-items: center;
+            padding-top: 40px;
+            background: white;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            background: #ccc;
+            margin-bottom: 15px;
+        }
+
+        /* 账号管理与登录样式 */
+        .link-btn {
+            background: none;
+            border: none;
+            color: #222;
+            padding: 8px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .account-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+
+        .account-modal {
+            background: #fff;
+            border-radius: 10px;
+            width: 360px;
+            max-width: 92%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .account-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .account-item {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        .account-item.danger {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            font-weight: 600;
+        }
+
+        .btn.primary {
+            background: #FCBEC3;
+            border-color: rgba(0, 0, 0, 0.06);
+        }
+
+        .overlay-backdrop {
+            position: fixed;
+            inset: 0;
+            background: transparent;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 聊天输入框样式 */
+        .chat-input-container {
+            display: flex;
+            padding: 12px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            align-items: flex-end;
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            resize: none;
+            max-height: 120px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #FCBEC3;
+            border: none;
+            color: #fff;
+            margin-left: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background: #f9a3aa;
+        }
+
+        /* ===== 未读消息红点 ===== */
+        .unread-dot {
+            display: none;
+            width: 10px;
+            height: 10px;
+            background-color: #ff3b30;
+            border-radius: 50%;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        .unread-dot.show {
+            display: block;
+        }
+
+        /* ===== 评论回复红点 ===== */
+        .comment-reply.unread {
+            position: relative;
+        }
+
+        .comment-reply.unread::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            width: 8px;
+            height: 8px;
+            background-color: #ff3b30;
+            border-radius: 50%;
+            border: 1px solid white;
+        }
+
+        /* ===== 生活圈图片显示样式 ===== */
+        .moments-images {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .moments-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 6px;
+        }
+
+        /* ===== 生活圈评论样式 ===== */
+        .comments-container {
+            margin-top: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            padding-top: 10px;
+        }
+
+        .comments-list {
+            margin-bottom: 10px;
+        }
+
+        .comment-item {
+            padding: 8px 0;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .comment-item:last-child {
+            border-bottom: none;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+        }
+
+        .comment-reply {
+            color: #666;
+            font-size: 12px;
+            margin-left: 8px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .comment-input-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            resize: none;
+            min-height: 36px;
+            line-height: 1.4;
+            box-sizing: border-box;
+        }
+
+        .comment-input:focus {
+            border-color: #FCBEC3;
+            box-shadow: 0 0 0 2px rgba(252, 190, 195, 0.2);
+        }
+
+        .comment-send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #FCBEC3;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .comment-send-btn:hover {
+            background: #f9a3aa;
+        }
+
+        .comment-send-btn i {
+            font-size: 14px;
+            transform: rotate(90deg);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="page">
+        <div id="ui">
+            <div id="content-area">
+                <!-- 左侧聊天列表 (30%) -->
+                <div id="sidebar">
+                    <div class="chat-item active" onclick="switchToChat('qun', this)">
+                        <div class="avatar"></div>
+                        <div class="chat-info">
+                            <div class="chat-name">狂喝海水三千吨，吐到海满换学分 (5)</div>
+                            <div class="preview">密码的，你改了倒是说一声啊密码的</div>
+                        </div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('beiguo', this)">
+                        <img src="pfp/beiguo.jpg" class="avatar" alt="贝果头像">
+                        <div class="chat-info">
+                            <div class="chat-name">🥯🥯</div>
+                            <div class="preview">墙墙投稿！学长经常来412教室巡逻，去412上课的同学可以给学长带点零食！匿了谢谢墙！</div>
+                        </div>
+                        <div class="unread-dot" id="unread-beiguo"></div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('xiong', this)">
+                        <img src="pfp/xiong.jpg" class="avatar" alt="熊头像">
+                        <div class="chat-info">
+                            <div class="chat-name">熊先生你还我金鳞片</div>
+                            <div class="preview">
+                                偷外卖为什么要偷药？？？已经痛经到起不来床了，点暖宫贴送到北门还被人拿走了，已到达一共没有五分钟，你挺快啊，我不知道这个暖宫贴你打算怎么吃，拆开粉包内服吗？你到底是怎么想的？？？
+                            </div>
+                        </div>
+                        <div class="unread-dot" id="unread-xiong"></div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('yu', this)">
+                        <img src="pfp/ningyu.jpg" class="avatar" alt="宁喻头像">
+                        <div class="chat-info">
+                            <div class="chat-name">喻.</div>
+                            <div class="preview">墙好 明明都说了东门危险 怎么有傻子往那去啊 天天都能听说有人受伤 长点心吧大家 匿了</div>
+                        </div>
+                        <div class="unread-dot" id="unread-yu"></div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('zhamao', this)">
+                        <img src="pfp/zhamao.jpg" class="avatar" alt="炸毛可乐头像">
+                        <div class="chat-info">
+                            <div class="chat-name">炸毛可乐</div>
+                            <div class="preview">墙捞人，周三在B区食堂二楼穿lo裙的女同学，很可爱像认识一下</div>
+                        </div>
+                        <div class="unread-dot" id="unread-zhamao"></div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('yuhang', this)">
+                        <img src="pfp/yuhang.jpg" class="avatar" alt="宇航头像">
+                        <div class="chat-info">
+                            <div class="chat-name">宇航欧巴的WeChat</div>
+                            <div class="preview">[图片]</div>
+                        </div>
+                    </div>
+
+
+                    <div class="chat-item" onclick="switchToChat('aaa', this)">
+                        <img src="pfp/aaa.jpg" class="avatar" alt="AAA头像">
+                        <div class="chat-info">
+                            <div class="chat-name">AAA鲈鱼批发商</div>
+                            <div class="preview">收到</div>
+                        </div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('caoyoumei', this)">
+                        <img src="pfp/cao.jpg" class="avatar" alt="草又莓了头像">
+                        <div class="chat-info">
+                            <div class="chat-name">草又莓了</div>
+                            <div class="preview">收到</div>
+                        </div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('empurple', this)">
+                        <img src="pfp/empurple.jpg" class="avatar" alt="empurple">
+                        <div class="chat-info">
+                            <div class="chat-name">Empurple</div>
+                            <div class="preview">收到！</div>
+                        </div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('xian', this)">
+                        <img src="pfp/xian.jpg" class="avatar" alt="仙-中的修仙人头像">
+                        <div class="chat-info">
+                            <div class="chat-name">仙-中的修仙人</div>
+                            <div class="preview">收到</div>
+                        </div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('xiaoyan', this)">
+                        <img src="pfp/xiaoyan.jpg" class="avatar" alt="小言头像">
+                        <div class="chat-info">
+                            <div class="chat-name">小言不闲</div>
+                            <div class="preview">收到</div>
+                        </div>
+                    </div>
+                    <div class="chat-item" onclick="switchToChat('yuwensi', this)">
+                        <img src="pfp/yuwensi.jpg" class="avatar" alt="学不会头像">
+                        <div class="chat-info">
+                            <div class="chat-name">学不会</div>
+                            <div class="preview">同学你好</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧主显示区 (70%) -->
+                <div id="main-display">
+                    <div id="chat-page" class="page active">
+                        <!-- 这里留空，由 switchToChat() 自动填充 -->
+                        <div class="chat-header" id="chat-header"></div>
+                        <div class="message-area" id="chat-messages"></div>
+                        <div class="chat-input-container">
+                            <textarea id="chat-input" placeholder="输入消息...（按 Enter 发送，Shift+Enter 换行）"></textarea>
+                            <button id="chat-send" class="send-btn" title="发送"><i
+                                    class="fas fa-level-down-alt"></i></button>
+                        </div>
+                    </div>
+
+                    <div id="moments-page" class="page">
+                        <div class="chat-header">生活圈</div>
+                        <div class="moments-input-container">
+                            <textarea id="moments-input"
+                                placeholder="在生活圈发表点什么...（按 Enter 发送，Shift+Enter 换行）"></textarea>
+                            <button id="moments-send" class="paper-btn" title="发送"><i
+                                    class="fas fa-paper-plane"></i></button>
+                        </div>
+                        <div class="message-area" id="moments-area">
+                            <div class="moments-item">
+                                <div><strong>AAA鲈鱼批发商</strong> 10月12日</div>
+                                <p>抢到伊老师的选修课了...！伊冷老师我的女神！</p>
+                            </div>
+                            <div class="moments-item">
+                                <div><strong>海大校园墙</strong>10.1</div>
+                                <p>有同学U盘丢了，有捡到的同学请联系我，有偿！</p>
+                                <div class="moments-images">
+                                    <img src="pic/Upan.jpg" alt="Upan" class="moments-image">
+                                </div>
+                                <div class="comments-container">
+                                    <div class="comments-list">
+                                    </div>
+                                    <div class="comment-input-container">
+                                        <input type="text" class="comment-input" placeholder="添加评论...">
+                                        <button class="comment-send-btn" title="发送"><i
+                                                class="fas fa-level-down-alt"></i></button>
+                                    </div>
+                                </div>
+
+                                <button class="trash-btn" title="删除"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <div class="moments-item">
+                                <div><strong>海大校园墙</strong> 10月11日</div>
+                                <p>有同学路过东门被掉下来的东西砸伤了，好在伤势不严重，大家一定不要前往东门，尽量绕路走，大家注意安全！</p>
+
+                                <div class="comments-container">
+                                    <div class="comments-list">
+                                        <div class="comment-item">
+                                            <span class="comment-author">草又莓了</span>: 啥玩意掉下来了
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                        <div class="comment-item">
+                                            <span class="comment-author">学不会</span>: 听说都给半拉身子砸扁了
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                        <div class="comment-item">
+                                            <span class="comment-author">Empurple</span>: 东楼不是新建的吗......
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                        <div class="comment-item">
+                                            <span class="comment-author">炸毛可乐</span>: 墙你为什么不回我
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 评论输入框 -->
+                                    <div class="comment-input-container">
+                                        <input type="text" class="comment-input" placeholder="添加评论...">
+                                        <button class="comment-send-btn" title="发送"><i
+                                                class="fas fa-level-down-alt"></i></button>
+                                    </div>
+                                </div>
+
+                                <button class="trash-btn" title="删除"><i class="fas fa-trash"></i></button>
+                            </div>
+
+                            <div class="moments-item">
+                                <div><strong>海大校园墙</strong>10.1</div>
+                                <p>有没有能配送上楼的美味饭？</p>
+                                <div class="comments-container">
+                                    <div class="comments-list">
+                                        <div class="comment-item">
+                                            <span class="comment-author">给小刘留一口</span>: 烤盘饭能送
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                        <div class="comment-item">
+                                            <span class="comment-author">喻.</span>: 二楼的黏糊麻辣烫能送，他家老好吃了还送冰红茶
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                        <div class="comment-item">
+                                            <span class="comment-author">家产99</span>: 点外卖
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                        <div class="comment-item">
+                                            <span class="comment-author">给你一拳</span>: 学校门口盖饭能送，但是送上楼要加钱
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                    </div>
+                                    <div class="comment-input-container">
+                                        <input type="text" class="comment-input" placeholder="添加评论...">
+                                        <button class="comment-send-btn" title="发送"><i
+                                                class="fas fa-level-down-alt"></i></button>
+                                    </div>
+                                </div>
+
+                                <button class="trash-btn" title="删除"><i class="fas fa-trash"></i></button>
+                            </div>
+
+                            <div class="moments-item">
+                                <div><strong>海大校园墙</strong>10.1</div>
+                                <p>求财务管理电子版教材</p>
+                                <div class="moments-images">
+                                    <img src="pic/wx.png" alt="wx" class="moments-image">
+                                </div>
+                                <div class="comments-container">
+                                    <div class="comments-list">
+                                    </div>
+                                    <div class="comment-input-container">
+                                        <input type="text" class="comment-input" placeholder="添加评论...">
+                                        <button class="comment-send-btn" title="发送"><i
+                                                class="fas fa-level-down-alt"></i></button>
+                                    </div>
+                                </div>
+
+                                <button class="trash-btn" title="删除"><i class="fas fa-trash"></i></button>
+                            </div>
+
+                            <div class="moments-item">
+                                <div><strong>海大校园墙</strong> 10.1</div>
+                                <p>图书馆找互扇搭子<br>
+                                    要求：<br>
+                                    1.要敢于下手，不然感受不到痛觉，不足以打醒我让我滚去复习；<br>
+                                    2.颜值不能太高，我怕自己爽到：（不过最好也不要太低）<br>
+                                    3.医学生／法学生优先，因为学习怨气比较大；研究生优先，因为写论文写不出来怨气也很大；6级高分优先，因为我上次考了0分；拒汉语言；<br>
+                                    4.要求诚信互扇，不许扇完我不让我扇回去，除非是干干净净涂了护手霜香气比巴掌先到的美女，那算奖励我，允许单扇。<br>
+                                    自我推荐：<br>
+                                    1.本人注意卫生，面部干爽无痘，不会弄脏搭子的手；<br>
+                                    2.本人颜值普通，搭子被扇不会爽到；<br>
+                                    3.本人卧推60，能很好完成互扇工作;<br>
+                                    4.本人是一个生性凉薄冷漠的188准备保研的女人，除互扇巴掌工作以外不会再纠缠你</p>
+                                <div class="comments-container">
+                                    <div class="comment-item">
+                                        <span class="comment-author">信不信我让你飞起来</span>: 发稿之前筛筛行吗，精神病投稿也给发啊？
+                                        <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                    </div>
+                                    <div class="comment-input-container">
+                                        <input type="text" class="comment-input" placeholder="添加评论...">
+                                        <button class="comment-send-btn" title="发送"><i
+                                                class="fas fa-level-down-alt"></i></button>
+                                    </div>
+                                </div>
+
+                                <button class="trash-btn" title="删除"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <div class="moments-item">
+                                <div><strong>海大校园墙</strong>10.1</div>
+                                <p>找一个宿舍美甲，预算40</p>
+                                <div class="comments-container">
+                                    <div class="comments-list">
+                                        <div class="comment-item">
+                                            <span class="comment-author">42号混凝土</span>: C2楼408，我朋友在那做过看着还行，就是加钻有点小贵
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                        <div class="comment-item">
+                                            <span class="comment-author">小言不闲</span>: 我室友可以，全寝都是她做的，C1212
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                        <div class="comment-item">
+                                            <span class="comment-author">家产99</span>: C1楼212，周五四点之后有时间
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                        <div class="comment-item">
+                                            <span class="comment-author">Meng巧克力</span>: 避雷C2某宿舍，粘得不牢还不给售后，找她理论她带着室友一起骂人
+                                            <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                                        </div>
+                                    </div>
+                                    <div class="comment-input-container">
+                                        <input type="text" class="comment-input" placeholder="添加评论...">
+                                        <button class="comment-send-btn" title="发送"><i
+                                                class="fas fa-level-down-alt"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div id="profile-page" class="page profile-page">
+                        <div class="profile-avatar"></div>
+                        <div style="font-size:18px; margin-bottom:5px;">海大校园墙</div>
+
+                        <div style="width:100%; padding:0 20px;">
+                            <div style="padding:15px 0; border-bottom:1px solid #eee; padding-left:15px;">
+                                <strong>我的收藏</strong>
+                            </div>
+                            <div style="padding:15px 0; border-bottom:1px solid #eee; padding-left:15px;">
+                                <strong>隐私安全</strong>
+                            </div>
+                            <div style="padding:15px 0; border-bottom:1px solid #eee; padding-left:15px;">
+                                <strong>设置</strong>
+                            </div>
+                            <div style="padding:15px 0; border-bottom:1px solid #eee; padding-left:15px;">
+                                <strong id="account-manage-btn" style="cursor: pointer;"
+                                    onclick="window.location.href = 'login.html'">切换账号</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="bottom-nav">
+                <div class="nav-icon active" onclick="switchTab('chat')">
+                    <i class="fas fa-comment"></i><span>聊天</span>
+                </div>
+                <div class="nav-icon" onclick="switchTab('moments')">
+                    <i class="fas fa-camera"></i><span>生活圈</span>
+                </div>
+                <div class="nav-icon" onclick="switchTab('profile')">
+                    <i class="fas fa-user"></i><span>我</span>
+                </div>
+            </div>
+        </div>
+        <script>
+            // 显示未读红点
+            function showUnreadDot(chatId) {
+                const dot = document.getElementById('unread-' + chatId);
+                if (dot) dot.classList.add('show');
+            }
+            // 隐藏未读红点
+            function hideUnreadDot(chatId) {
+                const dot = document.getElementById('unread-' + chatId);
+                if (dot) dot.classList.remove('show');
+            }
+            // 将左侧列表名字截断：如果长度超过 8，则保留前7个字符并在末尾用 ... 替代第8个字符
+            function truncateNames() {
+                document.querySelectorAll('.chat-name').forEach(el => {
+                    const txt = el.textContent.trim();
+                    if (txt.length > 8) {
+                        el.textContent = txt.slice(0, 7) + '...';
+                    }
+                });
+            }
+
+            function switchToChat(chat, el) {
+                // 切换到聊天页面（无论当前在“生活圈”或“我”界面）
+                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+                document.getElementById('chat-page').classList.add('active');
+                // 更新底部导航高亮到“聊天”项
+                document.querySelectorAll('.nav-icon').forEach(icon => icon.classList.remove('active'));
+                const chatNav = document.querySelector(".nav-icon[onclick=\"switchTab('chat')\"]");
+                if (chatNav) chatNav.classList.add('active');
+
+                // 确保聊天输入框显示
+                if (typeof updateChatInputVisibility === 'function') {
+                    updateChatInputVisibility();
+                }
+
+                document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+                if (el && el.classList) el.classList.add('active');
+                // 确保在切换时也运行截断（以防名字动态变化）
+                truncateNames();
+
+                const header = document.querySelector('#chat-page .chat-header');
+                const area = document.querySelector('#chat-page .message-area');
+                if (chat === 'beiguo') {
+                    header.innerText = '🥯🥯';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-05 14:32</div>
+                    <div class="message message-them">
+                        <img src="pfp/beiguo.jpg" class="msg-avatar" alt="贝果头像">
+                        <div class="bubble">墙墙投稿！学长经常来412教室巡逻，去412上课的同学可以给学长带点零食！匿了谢谢墙！</div>
+                    </div>
+                `;
+                } else if (chat === 'yu') {
+                    header.innerText = '喻.';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-07 10:00</div>
+                    <div class="message message-them">
+                        <img src="pfp/ningyu.jpg" class="msg-avatar" alt="宁喻头像">
+                        <div class="bubble">墙好 明明都说了东门危险 怎么有傻子往那去啊 天天都能听说有人受伤 长点心吧大家 匿了</div>
+                    </div>
+                `;
+                } else if (chat === 'aaa') {
+                    header.innerText = 'AAA鲈鱼批发商';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-07 10:00</div>
+                    <div class="message message-them">
+                        <img src="pfp/aaa.jpg" class="msg-avatar" alt="aaa头像">
+                        <div class="bubble">墙墙你好！我U盘丢了，长这样，有捡到的同学请联系我！！有偿！！！</div>
+                    </div>
+                    <div class="message message-them">
+                        <img src="pfp/aaa.jpg" class="msg-avatar" alt="aaa头像">
+                        <div class="bubble"><img src="pic/Upan.jpg" alt="Upan" style="max-width:220px; border-radius:8px; display:block;"></div>
+                    </div>
+                    <div class="message message-me">
+                        <div class="bubble">收到</div>
+                        <div class="msg-avatar me"></div>
+                    </div>
+                `;
+                } else if (chat === 'caoyoumei') {
+                    header.innerText = '草又莓了';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-07 10:02</div>
+                    <div class="message message-them">
+                        <img src="pfp/cao.jpg" class="msg-avatar" alt="草又莓了头像">
+                        <div class="bubble">墙墙，有同学路过东门被掉下来的东西砸伤了，好在伤势不严重，大家一定不要前往东门，尽量绕路走</div>
+                    </div>
+                    <div class="message message-them">
+                        <img src="pfp/cao.jpg" class="msg-avatar" alt="草又莓了头像">
+                        <div class="bubble">匿了</div>
+                    </div>
+                    <div class="message message-me">
+                        <div class="bubble">收到</div>
+                        <div class="msg-avatar me"></div>
+                    </div>
+                `;
+                } else if (chat === 'xian') {
+                    header.innerText = '仙-中的修仙人';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-07 10:04</div>
+                    <div class="message message-them">
+                        <img src="pfp/xian.jpg" class="msg-avatar" alt="仙-中的修仙人头像">
+                        <div class="bubble">求财务管理电子版教材</div>
+                    </div>
+                    <div class="message message-them">
+                        <img src="pfp/xian.jpg" class="msg-avatar" alt="仙-中的修仙人头像">
+                        <div class="bubble"><img src="pic/wx.png" alt="wx" style="max-width:220px; border-radius:8px; display:block;"></div>
+                    </div>
+                    <div class="message message-me">
+                        <div class="bubble">收到</div>
+                        <div class="msg-avatar me"></div>
+                    </div>
+                `;
+                } else if (chat === 'xiong') {
+                    header.innerText = '熊先生你还我金鳞片';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-05 15:00</div>
+                    <div class="message message-them">
+                        <img src="pfp/xiong.jpg" class="msg-avatar" alt="熊头像">
+                        <div class="bubble">墙 投稿</div>
+                    </div>
+                    <div class="message message-them">
+                        <img src="pfp/xiong.jpg" class="msg-avatar" alt="熊头像">
+                        <div class="bubble">偷外卖为什么要偷药？？？已经痛经到起不来床了，点暖宫贴送到北门还被人拿走了，已到达一共没有五分钟，你挺快啊，我不知道这个暖宫贴你打算怎么吃，拆开粉包内服吗？你到底是怎么想的？？？</div>
+                    </div>
+                `;
+
+                } else if (chat === 'yuhang') {
+                    header.innerText = '宇航欧巴的WeChat';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-05 15:04</div>
+                    <div class="message message-them">
+                        <img src="pfp/yuhang.jpg" class="msg-avatar" alt="宇航头像">
+                        <div class="bubble">墙，现在还能找代课吗</div>
+                    </div>
+                    <div class="message message-me">
+                        <div class="bubble">有代课群</div>
+                        <div class="msg-avatar me"></div>
+                    </div>
+                    <div class="message message-me">
+                        <img src="pic/youxiqun.jpg" alt="游戏群" style="max-width:220px; border-radius:8px; display:block;">
+                        <div class="msg-avatar me"></div>
+                    </div>
+                `;
+                } else if (chat === 'empurple') {
+                    header.innerText = 'Empurple';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-05 15:06</div>
+                    <div class="message message-them">
+                        <img src="pfp/empurple.jpg" class="msg-avatar" alt="empurple头像">
+                        <div class="bubble">墙好！有没有能配送上楼的美味饭！宿舍太高爬不动了</div>
+                    </div>
+                    <div class="message message-me">
+                        <div class="bubble">收到！</div>
+                        <div class="msg-avatar me"></div>
+                    </div>
+                `;
+                } else if (chat === 'zhamao') {
+                    header.innerText = '炸毛可乐';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-05 15:08</div>
+                    <div class="message message-them">
+                        <img src="pfp/zhamao.jpg" class="msg-avatar" alt="炸毛可乐头像">
+                        <div class="bubble">墙墙，找一个宿舍美甲，预算40</div>
+                    </div>
+                    <div class="message message-me">
+                        <div class="bubble">收到</div>
+                        <div class="msg-avatar me"></div>
+                    </div>
+                    <div class="message message-them">
+                        <img src="pfp/zhamao.jpg" class="msg-avatar" alt="炸毛可乐头像">
+                        <div class="bubble">墙捞人，周三在B区食堂二楼穿lo裙的女同学，很可爱像认识一下</div>
+                    </div>
+                `;
+                } else if (chat === 'xiaoyan') {
+                    header.innerText = '小言不闲';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-05 15:02</div>
+                    <div class="message message-them">
+                        <img src="pfp/xiaoyan.jpg" class="msg-avatar" alt="小言头像">
+                        <div class="bubble">墙好，图书馆找互扇搭子<br>
+                            要求：<br>
+                            1.要敢于下手，不然感受不到痛觉，不足以打醒我让我滚去复习；<br>
+                            2.颜值不能太高，我怕自己爽到：（不过最好也不要太低）<br>
+                            3.医学生／法学生优先，因为学习怨气比较大；研究生优先，因为写论文写不出来怨气也很大；6级高分优先，因为我上次考了0分；拒汉语言；<br>
+                            4.要求诚信互扇，不许扇完我不让我扇回去，除非是干干净净涂了护手霜香气比巴掌先到的美女，那算奖励我，允许单扇。<br>
+                            自我推荐：<br>
+                            1.本人注意卫生，面部干爽无痘，不会弄脏搭子的手；<br>
+                            2.本人颜值普通，搭子被扇不会爽到；<br>
+                            3.本人卧推60，能很好完成互扇工作;<br>
+                            4.本人是一个生性凉薄冷漠的188准备保研的女人，除互扇巴掌工作以外不会再纠缠你</div>
+                    </div>
+                    <div class="message message-me">
+                        <img src="pic/shock.gif" alt="震惊" style="max-width:220px; border-radius:8px; display:block;">
+                        <div class="msg-avatar me"></div>
+                    </div>
+                    <div class="message message-me">
+                        <div class="bubble">收到</div>
+                        <div class="msg-avatar me"></div>
+                    </div>
+                `;
+                } else if (chat === 'yuwensi') {
+                    header.innerText = '学不会';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-05 15:10</div>
+                    <div class="message message-them">
+                        <img src="pfp/yuwensi.jpg" class="msg-avatar" alt="学不会头像">
+                        <div class="bubble">墙同学你好🌹</div>
+                    </div>
+                    <div class="message message-me">
+                        <div class="bubble">同学你好</div>
+                        <div class="msg-avatar me"></div>
+                    </div>
+                `;
+                } else if (chat === 'threegroup') {
+                    header.innerText = '喻.、学不会、海大校园墙';
+                    area.innerHTML = `
+                        <div class="chat-time">刚刚</div>
+                        <div class="message message-them">
+                            <img src="pfp/ningyu.jpg" class="msg-avatar" alt="喻头像">
+                            <div class="bubble">123</div>
+                        </div>
+                        <div class="message message-them">
+                            <img src="pfp/yuwensi.jpg" class="msg-avatar" alt="学不会头像">
+                            <div class="bubble">112233</div>
+                        </div>
+                    `;
+                    // 隐藏红点
+                    hideUnreadDot('threegroup');
+                    // 更新左侧预览为最后一条消息
+                    const activeChatItem = document.querySelector('.chat-item[onclick*="threegroup"]');
+                    if (activeChatItem) {
+                        const previewElement = activeChatItem.querySelector('.preview');
+                        if (previewElement) {
+                            previewElement.textContent = '学不会: 112233';
+                        }
+                    }
+                } else if (chat === 'yuwensi') {
+                } else {
+                    header.innerText = '狂喝海水三千吨，吐到海满换学分 (5)';
+                    area.innerHTML = `
+                    <div class="chat-time">2025-12-05 14:40</div>
+                    <div class="message message-them">
+                        <div class="msg-avatar"></div>
+                        <div class="bubble">别接推广了</div>
+                    </div>
+                    <div class="message message-them">
+                        <div class="msg-avatar"></div>
+                        <div class="bubble">有钱不赚王八蛋奥</div>
+                    </div>
+                    <div class="message message-them">
+                        <div class="msg-avatar"></div>
+                        <div class="bubble">老多人被骗了，咱不干那丧良心事</div>
+                    </div>
+                    <div class="chat-time">2025-12-05 14:40</div>
+                    <div class="message message-them">
+                        <div class="msg-avatar"></div>
+                        <div class="bubble">谁给密码改了</div>
+                    </div>
+                    <div class="message message-them">
+                        <div class="msg-avatar"></div>
+                        <div class="bubble">我改的，123456789</div>
+                    </div>
+                    <div class="message message-me">
+                        <div class="bubble">密码的，你改了倒是说一声啊密码的</div>
+                        <div class="msg-avatar me"></div>
+                    </div>
+                    <div class="message message-them">
+                        <div class="msg-avatar"></div>
+                        <div class="bubble">你按时间顺序清稿，从下往上清，别从上往下清</div>
+                    </div>
+                `;
+                }
+            }
+            function switchTab(tabName) {
+                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+                document.getElementById(`${tabName}-page`).classList.add('active');
+
+                document.querySelectorAll('.nav-icon').forEach(icon => icon.classList.remove('active'));
+                event.currentTarget.classList.add('active');
+
+                // 更新聊天输入框的显示状态
+                if (typeof updateChatInputVisibility === 'function') {
+                    updateChatInputVisibility();
+                }
+            }
+
+            // 聊天输入框功能
+            document.addEventListener('DOMContentLoaded', function () {
+                truncateNames();
+                // === 新增：默认显示群聊 ===
+                // 高亮第一个聊天项
+                const firstChatItem = document.querySelector('.chat-item');
+                if (firstChatItem) {
+                    firstChatItem.classList.add('active');
+                }
+                // 显示群聊内容
+                switchToChat('qun', firstChatItem);
+                // 初始化：为喻加上红点
+                showUnreadDot('yu');
+                // 初始化：为🥯🥯加上红点
+                showUnreadDot('beiguo');
+                // 初始化：为熊老板你还我金鳞片加上红点
+                showUnreadDot('xiong');
+                // 初始化：为炸毛可乐加上红点
+                showUnreadDot('zhamao');
+                const chatInput = document.getElementById('chat-input');
+                const chatSend = document.getElementById('chat-send');
+                const messageArea = document.getElementById('chat-messages');
+
+                // 确保只在聊天页面显示输入框
+                function updateChatInputVisibility() {
+                    const chatPage = document.getElementById('chat-page');
+                    const chatInputContainer = document.querySelector('.chat-input-container');
+                    const momentsPage = document.getElementById('moments-page');
+                    const profilePage = document.getElementById('profile-page');
+
+                    if (chatPage && chatPage.classList.contains('active')) {
+                        if (chatInputContainer) chatInputContainer.style.display = 'flex';
+                    } else {
+                        if (chatInputContainer) chatInputContainer.style.display = 'none';
+                    }
+                }
+
+                function sendMessage() {
+                    const text = chatInput.value.trim();
+                    if (!text) return;
+
+                    // 创建新消息
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message message-me';
+
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    bubble.textContent = text;
+
+                    const avatar = document.createElement('div');
+                    avatar.className = 'msg-avatar me';
+
+                    messageDiv.appendChild(bubble);
+                    messageDiv.appendChild(avatar);
+
+                    // 添加到消息区域
+                    messageArea.appendChild(messageDiv);
+
+                    // 清空输入框
+                    chatInput.value = '';
+
+                    // === 检查发布内容，用于消除聊天红点 ===
+                    // 如果发布的文字包含特定关键词，则隐藏对应的聊天红点
+                    if (text.includes('危险') && text.includes('东门')) {
+                        hideUnreadDot('yu'); // 隐藏喻的红点
+                    }
+                    if (text.includes('学长') || text.includes('零食')) {
+                        hideUnreadDot('beiguo'); // 隐藏🥯🥯的红点
+                    }
+                    if (text.includes('偷外卖')) {
+                        hideUnreadDot('xiong'); // 隐藏熊老板你还我金鳞片的红点
+                    }
+                    if (text.includes('lo裙')) {
+                        hideUnreadDot('zhamao'); // 隐藏炸毛可乐的红点
+                    }
+                    // === 自动更新左侧聊天预览 ===
+                    // 找到当前活跃的聊天项
+                    const activeChatItem = document.querySelector('.chat-item.active');
+                    if (activeChatItem) {
+                        const previewElement = activeChatItem.querySelector('.preview');
+                        if (previewElement) {
+                            // 简化文本（移除过长的内容）
+                            let previewText = text;
+                            if (previewText.length > 30) {
+                                previewText = previewText.substring(0, 27) + '...';
+                            }
+                            previewElement.textContent = previewText;
+                        }
+                    }
+                    // 滚动到底部
+                    messageArea.scrollTop = messageArea.scrollHeight;
+                }
+
+                // 发送按钮点击事件
+                if (chatSend) {
+                    chatSend.addEventListener('click', sendMessage);
+                }
+
+                // 输入框键盘事件
+                if (chatInput) {
+                    chatInput.addEventListener('keydown', function (e) {
+                        // 按下Enter键发送消息
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            sendMessage();
+                        }
+                        // 按下Shift+Enter换行（默认行为）
+                    });
+                }
+
+                // 初始化时调用一次，确保输入框显示状态正确
+                updateChatInputVisibility();
+            });
+            // 处理喻的回复
+            function handleYuReply(element) {
+                const momentItem = element.closest('.moments-item');
+                const commentInput = momentItem.querySelector('.comment-input');
+
+                commentInput.placeholder = `回复 @喻....`;
+                commentInput.focus();
+
+                // 存储当前回复的目标
+                momentItem._replyTarget = '喻.';
+                momentItem._yuReplyElement = element;
+
+                // 标记已点击
+                element.onclick = null;
+                element.style.cursor = 'default';
+                element.style.opacity = '0.7';
+            }
+            // 生活圈：发布动态交互逻辑
+            (function () {
+                const input = document.getElementById('moments-input');
+                const sendBtn = document.getElementById('moments-send');
+                const momentsArea = document.getElementById('moments-area');
+
+                function formatNow() {
+                    const d = new Date();
+                    const M = d.getMonth() + 1;
+                    const D = d.getDate();
+                    return `${M}月${D}日 ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                }
+
+                function postMoment() {
+                    if (!input) return;
+                    const txt = input.value.trim();
+                    if (!txt) return;
+                    const item = document.createElement('div');
+                    item.className = 'moments-item';
+                    const header = document.createElement('div');
+                    // 玩家操控为“海大校园墙”，因此发布者显示为“海大校园墙”并自动带删除按钮
+                    header.innerHTML = `<strong>海大校园墙</strong> ${formatNow()}`;
+                    const p = document.createElement('p');
+                    p.textContent = txt;
+                    item.appendChild(header);
+                    item.appendChild(p);
+                    // 创建评论区域
+                    const commentsContainer = document.createElement('div');
+                    commentsContainer.className = 'comments-container';
+
+                    // 创建评论列表
+                    const commentsList = document.createElement('div');
+                    commentsList.className = 'comments-list';
+
+                    // 创建评论输入框
+                    const commentInput = document.createElement('div');
+                    commentInput.className = 'comment-input-container';
+                    commentInput.innerHTML = `
+                     <input type="text" class="comment-input" placeholder="添加评论...">
+                      <button class="comment-send-btn" title="发送"><i class="fas fa-level-down-alt"></i></button>
+                `;
+
+                    // 组合评论区域
+                    commentsContainer.appendChild(commentsList);
+                    commentsContainer.appendChild(commentInput);
+                    item.appendChild(commentsContainer);
+
+                    // 添加删除按钮（右上角）
+                    const trashBtn = document.createElement('button');
+                    trashBtn.className = 'trash-btn';
+                    trashBtn.title = '删除';
+                    trashBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    item.appendChild(trashBtn);
+
+                    // 绑定删除按钮事件
+                    trashBtn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        showConfirm(item);
+                    });
+
+                    // 将新内容插到最上方（在现有第一个 moments-item 之前）
+                    if (momentsArea.firstChild) momentsArea.insertBefore(item, momentsArea.firstChild);
+                    else momentsArea.appendChild(item);
+                    // 清空输入框
+                    input.value = '';
+                    // === 检查发布内容，用于消除聊天红点 ===
+                    if (txt.includes('危险') && txt.includes('东门')) {
+                        hideUnreadDot('yu'); // 隐藏喻的红点
+                    }
+                    // === 新增：如果包含"东门"关键词，3秒后自动添加评论 ===
+                    if (txt.includes('东门') && txt.includes('危险')) {
+                        // 找到最新发布的这条动态
+                        const latestMoment = item;
+                        if (latestMoment) {
+                            const commentsList = latestMoment.querySelector('.comments-list');
+                            if (commentsList) {
+
+                                // 2秒后添加第一条评论：草又莓了
+                                setTimeout(() => {
+                                    const commentItem1 = document.createElement('div');
+                                    commentItem1.className = 'comment-item';
+                                    commentItem1.innerHTML = `
+                    <span class="comment-author">草又莓了</span>: 啥玩意掉下来了？
+                    <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                `;
+                                    commentsList.appendChild(commentItem1);
+                                }, 2000); // 发布后2秒
+
+                                // 4秒后添加第二条评论：学不会
+                                setTimeout(() => {
+                                    const commentItem2 = document.createElement('div');
+                                    commentItem2.className = 'comment-item';
+                                    commentItem2.innerHTML = `
+                    <span class="comment-author">学不会</span>: 听说下半身全砸碎了，每次都同一个人，像小说似的，循环啊？
+                    <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                `;
+                                    commentsList.appendChild(commentItem2);
+                                }, 4000); // 发布后4秒
+
+                                // 5秒后添加第三条评论：Empurple
+                                setTimeout(() => {
+                                    const commentItem3 = document.createElement('div');
+                                    commentItem3.className = 'comment-item';
+                                    commentItem3.innerHTML = `
+                    <span class="comment-author">Empurple</span>: 东楼不是新建的吗......
+                    <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                `;
+                                    commentsList.appendChild(commentItem3);
+                                }, 5000); // 发布后5秒
+
+                                // 5秒后同时添加第四条评论：炸毛可乐
+                                setTimeout(() => {
+                                    const commentItem4 = document.createElement('div');
+                                    commentItem4.className = 'comment-item';
+                                    commentItem4.innerHTML = `
+                    <span class="comment-author">炸毛可乐</span>: 墙你为什么不回我
+                    <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                `;
+                                    commentsList.appendChild(commentItem4);
+                                }, 5000); // 发布后5秒（与第三条同时）
+
+                                // 7秒后添加喻的回复
+                                setTimeout(() => {
+                                    // 找到学不会的评论（第二条评论）
+                                    const xuebuhuiComments = commentsList.querySelectorAll('.comment-item');
+                                    // 寻找学不会的评论
+                                    let xuebuhuiComment = null;
+                                    for (let comment of xuebuhuiComments) {
+                                        if (comment.textContent.includes('学不会')) {
+                                            xuebuhuiComment = comment;
+                                            break;
+                                        }
+                                    }
+
+                                    if (xuebuhuiComment) {
+                                        const yuReply = document.createElement('div');
+                                        yuReply.className = 'comment-item';
+                                        yuReply.innerHTML = `
+                        <span class="comment-author">喻.</span> 回复 <span class="comment-author">@学不会</span>: 同学你好，可以私聊吗，我加你。
+                        <span class="comment-reply unread" onclick="handleYuReply(this)">回复</span>
+                    `;
+
+                                        // 插入到学不会的评论后面
+                                        xuebuhuiComment.parentNode.insertBefore(yuReply, xuebuhuiComment.nextSibling);
+
+                                        // 绑定评论事件
+                                        bindCommentEvents(latestMoment);
+                                    }
+                                }, 7000); // 发布后7秒
+                            }
+                        }
+                    }
+                    if (txt.includes('学长') || txt.includes('零食')) {
+                        hideUnreadDot('beiguo'); // 隐藏🥯🥯的红点
+                    }
+                    if (txt.includes('偷外卖')) {
+                        hideUnreadDot('xiong'); // 隐藏熊老板你还我金鳞片的红点
+                    }
+                    if (txt.includes('lo裙')) {
+                        hideUnreadDot('zhamao'); // 隐藏炸毛可乐的红点
+                    }
+                    // 切换到生活圈页以展示（如果当前不在的话）
+                    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+                    document.getElementById('moments-page').classList.add('active');
+                    document.querySelectorAll('.nav-icon').forEach(icon => icon.classList.remove('active'));
+                    const momentsNav = document.querySelector(".nav-icon[onclick=\"switchTab('moments')\"]");
+                    if (momentsNav) momentsNav.classList.add('active');
+                    // 发布后绑定评论事件
+                    bindCommentEvents(item);
+                }
+                // 评论功能处理
+                function handleComment(item, targetAuthor = '') {
+                    const commentInput = item.querySelector('.comment-input');
+                    const commentsList = item.querySelector('.comments-list');
+
+                    if (commentInput.value.trim() === '') return;
+
+                    const commentText = commentInput.value.trim();
+                    const commentItem = document.createElement('div');
+                    commentItem.className = 'comment-item';
+
+                    // 如果有回复目标，显示"回复 @昵称:"
+                    if (targetAuthor) {
+                        commentItem.innerHTML = `
+                        <span class="comment-author">海大校园墙</span> 回复 <span class="comment-author">@${targetAuthor}</span>: ${commentText}
+                        <span class="comment-reply" onclick="replyToComment(this)">回复</span>
+                    `;
+                    } else {
+                        commentItem.innerHTML = `
+                        <span class="comment-author">海大校园墙</span>: ${commentText}
+                    `;
+                    }
+
+                    commentsList.appendChild(commentItem);
+                    commentInput.value = '';
+                    commentInput.placeholder = '添加评论...';
+                    commentInput.focus();
+                    1
+                    // 检查是否回复了喻
+                    if (targetAuthor === '喻.' && item._yuReplyElement) {
+                        // 移除红点
+                        item._yuReplyElement.classList.remove('unread');
+
+                        // 3秒后创建三人群聊
+                        setTimeout(() => {
+                            createGroupChat();
+                        }, 3000);
+
+                        // 清理
+                        item._yuReplyElement = null;
+                    }
+                }
+
+                // 回复评论功能
+                window.replyToComment = function (element) {
+                    const commentItem = element.closest('.comment-item');
+                    const authorSpan = commentItem.querySelector('.comment-author');
+                    const targetAuthor = authorSpan.textContent.replace('@', '');
+
+                    const momentItem = commentItem.closest('.moments-item');
+                    const commentInput = momentItem.querySelector('.comment-input');
+
+                    commentInput.placeholder = `回复 @${targetAuthor}...`;
+                    commentInput.focus();
+
+                    // 存储当前回复的目标
+                    momentItem._replyTarget = targetAuthor;
+                }
+
+                // 为每条动态绑定评论发送事件
+                function bindCommentEvents(item) {
+                    const sendBtn = item.querySelector('.comment-send-btn');
+                    const commentInput = item.querySelector('.comment-input');
+
+                    if (!sendBtn || sendBtn._bound) return; // 防止重复绑定
+
+                    sendBtn.addEventListener('click', function () {
+                        const targetAuthor = item._replyTarget || '';
+                        handleComment(item, targetAuthor);
+                        item._replyTarget = ''; // 清除回复目标
+                    });
+
+                    commentInput.addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') {
+                            const targetAuthor = item._replyTarget || '';
+                            handleComment(item, targetAuthor);
+                            item._replyTarget = ''; // 清除回复目标
+                        }
+                    });
+
+                    sendBtn._bound = true; // 标记已绑定
+                }
+                if (sendBtn) {
+                    sendBtn.addEventListener('click', postMoment);
+                }
+                if (input) {
+                    input.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            postMoment();
+                        }
+                    });
+                }
+                // 为已存在或后续创建的由“海大校园墙”发布的项添加垃圾桶（右下角）并绑定事件
+                function bindTrashButtons() {
+                    const items = document.querySelectorAll('#moments-area .moments-item');
+                    items.forEach(it => {
+                        const header = it.querySelector('div');
+                        // 只为"海大校园墙"发布的动态处理删除按钮
+                        if (header && header.textContent && header.textContent.includes('海大校园墙')) {
+                            // 
+                            if (!it.querySelector('.trash-btn')) {
+                                const btn = document.createElement('button');
+                                btn.className = 'trash-btn';
+                                btn.title = '删除';
+                                btn.innerHTML = '<i class="fas fa-trash"></i>';
+                                it.appendChild(btn);
+                            }
+                            // 为删除按钮绑定事件（无论新旧）
+                            const trashBtn = it.querySelector('.trash-btn');
+                            if (trashBtn && !trashBtn._bound) {
+                                trashBtn.addEventListener('click', function (e) {
+                                    e.stopPropagation();
+                                    showConfirm(it);
+                                });
+                                trashBtn._bound = true; // 标记已绑定
+                            }
+                        }
+                        // 动态绑定评论事件
+                        bindCommentEvents(it);
+                    });
+                }
+
+                // 确认对话框逻辑
+                let pendingDelete = null;
+                function showConfirm(targetItem) {
+                    pendingDelete = targetItem;
+                    const overlay = document.getElementById('confirm-overlay');
+                    if (overlay) overlay.classList.remove('hidden');
+                }
+                function hideConfirm() {
+                    pendingDelete = null;
+                    const overlay = document.getElementById('confirm-overlay');
+                    if (overlay) overlay.classList.add('hidden');
+                }
+
+                function doDelete() {
+                    if (pendingDelete && pendingDelete.parentNode) {
+                        pendingDelete.parentNode.removeChild(pendingDelete);
+                    }
+                    hideConfirm();
+                }
+                // 初始化：绑定已有的垃圾桶并绑定确认对话框按钮（在 DOMContentLoaded 中执行，确保元素存在）
+                document.addEventListener('DOMContentLoaded', function () {
+                    // 为现有生活圈动态添加评论功能
+                    const existingMoments = document.querySelectorAll('#moments-area .moments-item');
+                    existingMoments.forEach(item => {
+                        // 检查是否已有评论区域
+                        if (!item.querySelector('.comments-container')) {
+                            // 创建评论区域
+                            const commentsContainer = document.createElement('div');
+                            commentsContainer.className = 'comments-container';
+
+                            const commentsList = document.createElement('div');
+                            commentsList.className = 'comments-list';
+
+                            const commentInput = document.createElement('div');
+                            commentInput.className = 'comment-input-container';
+                            commentInput.innerHTML = `
+                            <input type="text" class="comment-input" placeholder="添加评论...">
+                            <button class="comment-send-btn" title="发送"><i class="fas fa-level-down-alt"></i></button>
+                        `;
+
+                            commentsContainer.appendChild(commentsList);
+                            commentsContainer.appendChild(commentInput);
+
+                            // 插入到删除按钮之前
+                            const trashBtn = item.querySelector('.trash-btn');
+                            if (trashBtn) {
+                                item.insertBefore(commentsContainer, trashBtn);
+                            } else {
+                                item.appendChild(commentsContainer);
+                            }
+
+                            // 绑定评论事件
+                            bindCommentEvents(item);
+                        }
+                    });
+                    bindTrashButtons();
+
+                    const delBtn = document.getElementById('confirm-delete');
+                    const cancelBtn = document.getElementById('confirm-cancel');
+                    if (delBtn) delBtn.addEventListener('click', doDelete);
+                    if (cancelBtn) cancelBtn.addEventListener('click', hideConfirm);
+                    const confirmOverlay = document.getElementById('confirm-overlay');
+                    if (confirmOverlay) {
+                        confirmOverlay.addEventListener('click', function (event) {
+                            if (event.target === confirmOverlay || event.target.classList.contains('overlay-backdrop')) {
+                                hideConfirm();
+                            }
+                        });
+                    }
+                });
+                // 每次发布也检查是否需要绑定（发布时会插入新节点）
+                const originalPost = postMoment;
+                // override postMoment variable reference not needed because we create items only as '我'
+
+                // 创建三人群聊
+                function createGroupChat() {
+                    // 在左侧聊天列表添加新群聊
+                    const sidebar = document.getElementById('sidebar');
+                    const newChat = document.createElement('div');
+                    newChat.className = 'chat-item';
+                    newChat.setAttribute('onclick', "switchToChat('threegroup', this)");
+                    newChat.innerHTML = `
+                        <div class="avatar" style="background: linear-gradient(45deg, #FFB6C1, #87CEEB);"></div>
+                        <div class="chat-info">
+                            <div class="chat-name">喻.、学不会、海大校园墙</div>
+                            <div class="preview">喻.: 123</div>
+                        </div>
+                        <div class="unread-dot" id="unread-threegroup"></div>
+                    `;
+
+                    // 插入到第二个位置
+                    const firstChat = sidebar.querySelector('.chat-item');
+                    sidebar.insertBefore(newChat, firstChat.nextSibling);
+
+                    // 显示红点
+                    showUnreadDot('threegroup');
+
+                    // 切换到群聊
+                    setTimeout(() => {
+                        switchToChat('threegroup', newChat);
+                    }, 100);
+                }
+            })();
+
+        </script>
+        <!-- 删除确认对话框（默认隐藏） -->
+        <div id="confirm-overlay" class="confirm-overlay hidden" aria-hidden="true">
+            <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+                <div id="confirm-title" class="confirm-body">确定删除吗</div>
+                <div class="confirm-footer">
+                    <button id="confirm-delete" class="confirm-btn delete">删除</button>
+                    <button id="confirm-cancel" class="confirm-btn">取消</button>
+                </div>
+            </div>
+        </div>
+</body>
+
+</html>
